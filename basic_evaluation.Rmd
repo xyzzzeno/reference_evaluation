@@ -5,7 +5,9 @@ output: html_notebook
 
 The input file "**NCBI_df**" is an example file, with the structure as shown:
 
-![](images/Screenshot%202025-02-07%20at%2017.07.24.png)
+ seqid   taxid   kingdom   phylum       class           order       family      genus                 species   sequence
+LC795399 1316011 Eukaryota Chordata Actinopteri Acanthuriformes Acanthuridae Acanthurus Acanthurus auranticavus   AGTAGGAACGGCCTTAAGCCTCCTAATCCGAGCA...
+PP735710   58324 Eukaryota Chordata Actinopteri   Cypriniformes  Leuciscidae   Phoxinus       Phoxinus phoxinus   CCTTTATCTTGTATTTGGTGCCTGAGCCGGAATG...
 
 ## Number of sequence records and species per phylum
 
@@ -52,7 +54,7 @@ species_count <- ggplot(taxonomy_counts, aes(y = phylum, x = -Species_Count, fil
 seq_sp_number <- species_count + sequence_count + plot_layout(ncol = 2) 
 ```
 
-![](plots/0_number.png)
+
 
 ## Species representation check
 
@@ -96,7 +98,7 @@ representation <- ggplot(representation_long, aes(x = phylum, y = Proportion, fi
     theme(legend.position = "bottom",plot.background = element_rect(fill = "white", color = NA),axis.text.y =element_text(hjust = 1,size = 11))
 ```
 
-![](plots/0_rep.png)
+
 
 ## Length of sequences
 
@@ -130,7 +132,7 @@ length_dis <- ggplot(NCBI_df, aes(x = phylum, y = Length, fill = phylum)) +
   scale_y_log10()
 ```
 
-![](plots/0_len.png)
+
 
 ## Ambiguous nucleotides
 
@@ -227,4 +229,4 @@ missing_tax_rank <- ggplot(missing_tax_long, aes(x = Rank, y = phylum, fill = Mi
     guides(fill = guide_colourbar(barwidth = 20, barheight = 1))
 ```
 
-![](plots/0_missing.png)
+
