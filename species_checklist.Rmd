@@ -1,0 +1,100 @@
+---
+title: "Species checklist retrieval"
+output: html_notebook
+---
+
+## Get species list from OBIS
+```{r}
+tropical_wpc1 <- "POLYGON((140 23.5, 180 23.5, 180 -23.5, 140 -23.5, 140 23.5))"
+tropical_wpc2 <- "POLYGON((-180 23.5, -150 23.5, -150 -23.5, -180 -23.5, -180 23.5))"
+temperateN_wpc1 <- "POLYGON((140 50, 180 50, 180 23.5, 140 23.5, 140 50))"
+temperateN_wpc2 <- "POLYGON((-180 50, -150 50, -150 23.5, -180 23.5, -180 50))"
+temperateS_wpc1 <- "POLYGON((140 -23.5, 180 -23.5, 180 -50, 140 -50, 140 -23.5))"
+temperateS_wpc2 <- "POLYGON((-180 -23.5, -150 -23.5, -150 -50, -180 -50, -180 -23.5))"
+```
+
+```{r}
+temperateN_data1 <- robis::checklist(geometry=temperateN_wpc1, scientificname = "Animalia")
+temperateN_data2 <- robis::checklist(geometry=temperateN_wpc2, scientificname = "Animalia")
+temperateN_data <- rbind(temperateN_data1,temperateN_data2) %>% unique()
+```
+
+```{r}
+temperateS_data1 <- robis::checklist(geometry=temperateS_wpc1, scientificname = "Animalia")
+temperateS_data2 <- robis::checklist(geometry=temperateS_wpc2, scientificname = "Animalia")
+temperateS_data <- rbind(temperateS_data1,temperateS_data2) %>% unique()
+```
+
+```{r}
+tropical_data1 <- robis::checklist(geometry=tropical_wpc1, scientificname = "Animalia")
+tropical_data2 <- robis::checklist(geometry=tropical_wpc2, scientificname = "Animalia")
+tropical_data <- rbind(tropical_data1,tropical_data2) %>% unique()
+```
+
+
+## Data clean-up and check synonyms 
+```{r}
+temperateN_clean <- temperateN_data[!duplicated(temperateN_data),] %>% 
+  filter(taxonRank %in% c("Species","Subspecies","Tribe","Variety")) %>% 
+  filter(taxonomicStatus == "accepted") %>%
+  filter(is_marine == TRUE) %>%
+  filter(!is.na(acceptedNameUsageID)) %>%
+  dplyr::select(scientificName, scientificNameAuthorship, acceptedNameUsage, acceptedNameUsageID,taxonID, ncbi_id, is_marine, is_brackish, kingdom, phylum, class, order, family, genus, species,bold_id,records)
+
+temperateN_clean$synonyms <- sapply(temperateN_clean$acceptedNameUsageID, get_synonyms)
+
+
+
+temperateS_clean <- temperateS_data[!duplicated(temperateS_data),] %>% 
+  filter(taxonRank %in% c("Species","Subspecies","Tribe","Variety")) %>% 
+  filter(taxonomicStatus == "accepted") %>%
+  filter(is_marine == TRUE) %>%
+  filter(!is.na(acceptedNameUsageID)) %>%
+  dplyr::select(scientificName, scientificNameAuthorship, acceptedNameUsage, acceptedNameUsageID,taxonID, ncbi_id, is_marine, is_brackish, kingdom, phylum, class, order, family, genus, species,bold_id,records)
+
+temperateS_clean$synonyms <- sapply(temperateS_clean$acceptedNameUsageID, get_synonyms)
+
+
+
+tropical_clean <- tropical_data[!duplicated(tropical_data),] %>% 
+  filter(taxonRank %in% c("Species","Subspecies","Tribe","Variety")) %>% 
+  filter(taxonomicStatus == "accepted") %>%
+  filter(is_marine == TRUE ) %>%
+  filter(!is.na(acceptedNameUsageID)) %>%
+  dplyr::select(scientificName, scientificNameAuthorship, acceptedNameUsage, acceptedNameUsageID,taxonID, ncbi_id, is_marine, is_brackish, kingdom, phylum, class, order, family, genus, species,bold_id,records)
+
+tropical_clean$synonyms <- sapply(tropical_clean$acceptedNameUsageID, get_synonyms)
+```
+
+
+## Filtering and dereplication
+```{r}
+temperateN_clean_nona <- temperateN_clean %>% filter(!is.na(species)) %>% distinct(species, .keep_all=TRUE)
+```
+
+```{r}
+temperateS_clean_nona <- temperateS_clean %>% filter(!is.na(species)) %>% distinct(species, .keep_all=TRUE)
+```
+
+```{r}
+tropical_clean_nona <- tropical_clean %>% filter(!is.na(species)) %>% distinct(species, .keep_all=TRUE)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
