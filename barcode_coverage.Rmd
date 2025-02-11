@@ -1,0 +1,120 @@
+---
+title: "Barcode coverage evaluation"
+output: html_notebook
+---
+
+The original tempN_barcode, temS_barcode, and tropical_barcode all have 16 columns:
+
+scientificName    taxonID   kingdom   phylum    class   order   family    genus   species   occurrence_records    NCBI_N_Seq    BOLD_N_Seq   NCBI_N_seq_syn    BOLD_N_seq_syn    NCBI_N_seq_all    BOLD_N_seq_all
+
+
+## Categorize barcode situation
+```{r}
+tempN_barcode <- tempN_barcode %>%
+  mutate(
+    Barcode_Category = case_when(
+      NCBI_N_seq_all > 0 & BOLD_N_seq_all > 0 ~ "Both databases",
+      NCBI_N_seq_all > 0 & BOLD_N_seq_all == 0 ~ "Only NCBI",
+      NCBI_N_seq_all == 0 & BOLD_N_seq_all > 0 ~ "Only BOLD",
+      NCBI_N_seq_all == 0 & BOLD_N_seq_all == 0 ~ "No barcode"
+    )
+  )
+```
+
+```{r}
+tempS_barcode <- tempS_barcode %>%
+  mutate(
+    Barcode_Category = case_when(
+      NCBI_N_seq_all > 0 & BOLD_N_seq_all > 0 ~ "Both databases",
+      NCBI_N_seq_all > 0 & BOLD_N_seq_all == 0 ~ "Only NCBI",
+      NCBI_N_seq_all == 0 & BOLD_N_seq_all > 0 ~ "Only BOLD",
+      NCBI_N_seq_all == 0 & BOLD_N_seq_all == 0 ~ "No barcode"
+    )
+  )
+```
+
+```{r}
+tropical_barcode <- tropical_barcode %>%
+  mutate(
+    Barcode_Category = case_when(
+      NCBI_N_seq_all > 0 & BOLD_N_seq_all > 0 ~ "Both databases",
+      NCBI_N_seq_all > 0 & BOLD_N_seq_all == 0 ~ "Only NCBI",
+      NCBI_N_seq_all == 0 & BOLD_N_seq_all > 0 ~ "Only BOLD",
+      NCBI_N_seq_all == 0 & BOLD_N_seq_all == 0 ~ "No barcode"
+    )
+  )
+```
+
+
+## Summarize on phylum level
+```{r}
+tempN_phylum_summary <- tempN_barcode %>%
+  group_by(phylum, Barcode_Category) %>%
+  summarise(Count = n(), .groups = "drop")
+```
+
+```{r}
+tempS_phylum_summary <- tempS_barcode %>%
+  group_by(phylum, Barcode_Category) %>%
+  summarise(Count = n(), .groups = "drop")
+```
+
+```{r}
+tropical_phylum_summary <- tropical_barcode %>%
+  group_by(phylum, Barcode_Category) %>%
+  summarise(Count = n(), .groups = "drop")
+```
+
+```{r}
+tropical_phylum_summary$area <- "Tropical (total species = 26,682)"
+tempS_phylum_summary$area <- "South temperate (total species = 24,290)"
+tempN_phylum_summary$area <- "North temperate (total species = 6,280)"
+```
+
+
+## Combine regions and visualization
+```{r}
+phylum_all_summary <- rbind(tropical_phylum_summary,tempS_phylum_summary,tempN_phylum_summary)
+```
+
+```{r}
+coverage <- ggplot(phylum_all_summary,aes(y = phylum, x = Count, fill = Barcode_Category)) +
+  geom_bar(stat = "identity", color="black", width=0.7) +
+  labs(x = "Number of Species",
+       y = "",
+       fill = "") +
+  theme_bw() + 
+  scale_fill_manual(values=c("#ea8685","#78e08f","#f8c91c","#32afcb")) +
+  geom_text(aes(y = phylum, x = Total_Barcodes + 1, label = sprintf("%.1f%%", Barcode_Proportion)), hjust=-0.1, size=3,face="bold")+
+  facet_wrap(~area,ncol = 1) + 
+  theme(strip.background = element_rect(fill = "grey", color = "black"),strip.text = element_text(face = "bold"),legend.position = "bottom")
+print(coverage)
+```
+
+
+## Pie-donut chart
+```{r}
+all_distribution <- barcode_all %>% group_by(distribution) %>% summarise(N_sp = n_distinct(species), N_sp_w_barcode=sum(Barcode_Category != "No barcode"))
+```
+
+```{r}
+all_distribution_long <- all_distribution %>% 
+  mutate(N_sp_no_barcode = N_sp - N_sp_w_barcode) %>% 
+  pivot_longer(cols = c(N_sp_w_barcode, N_sp_no_barcode), 
+               names_to = "barcode_status", 
+               values_to = "count") 
+```
+
+```{r}
+pie <- pie_donut_full(all_distribution_long, aes(distribution, barcode_status,count=count),palette_name = "Set2",explodeDonut=TRUE,pieLabelSize=4, explode = c(1,2,3))
+print(pie)
+```
+
+
+
+
+
+
+
+
+
